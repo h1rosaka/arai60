@@ -1,0 +1,287 @@
+
+
+# 141. Linked List Cycle
+
+問題リンク
+- https://leetcode.com/problems/linked-list-cycle/description/
+
+> Given head, the head of a linked list, determine if the linked list has a cycle in it.
+There is a cycle in a linked list if there is some node in the list that can be reached again by continuously following the next pointer. Internally, pos is used to denote the index of the node that tail's next pointer is connected to. Note that pos is not passed as a parameter.
+Return true if there is a cycle in the linked list. Otherwise, return false.
+
+
+# STEP 1 自力で解く。
+
+
+```
+class Solution(object):
+    def hasCycle(self, head):
+        """
+        :type head: ListNode
+        :rtype: bool
+        """
+        flag = False
+        checked_nodes = []
+        checking_node = head
+        
+        while checking_node.next != None:
+            if checking_node in checked_nodes:
+                flag = True
+                break
+            else:
+                checked_nodes.append(checking_node)
+                checking_node = checking_node.next
+
+        return flag
+```
+所要時間　
+- 8m18s
+
+コメント
+- ~~答えを見ずに正解できたのはよかった。~~
+    - このコードは ```Run``` では問題なかったが、```Submit```をしたらエラーが出た。
+    - 問題は ```while checking_node.next != None:```で、nextがNone、、つまり終わりが見えたらループしない、としていたが、headとしてNoneが渡されるケースがあるようで、そうするとNoneに対してnextというattributeを取得しようとしてエラーになる。
+    - .nextを除いて、```while checking_node != None:``` とすれば、問題なく動く(後述の通りisを使うべきだが。)
+- 実は1回checked_nodesの複数形のsをif文の方で忘れていてエラーになった。こういう見逃しを減らすにはどうしたら良いものか。
+    -  追記：```checking_node``` と　```checked_nodes``` という紛らわしいものが二つあるのが一因かもしれない。seenとか使ったら、間違えにくくなるかも。
+
+
+
+
+
+
+
+<br>
+<br>
+
+# STEP2 読みやすくする＆他の人の解法を見る
+### 2_1.  正解を見てみる
+- [ビデオの解説](https://leetcode.com/problems/linked-list-cycle/solutions/5483178/video-cycle-detection-visualized-tortoise-and-hare-method)がついている。leetcodeすごい。
+- Tortoise and Hare method なるものがあるらしい。　陸亀と野ウサギという意味とのこと。turtoiseは水中に住む亀であるturleとは別で、Hareもペットとして買うようなrabbitとは別物で、Hareの方がすごく速く走るらしい。そういえば小学校にいたウサギ(rabbit)もそこまで足はやいイメージなかったかも。
+- 輪っかがあるコースで、1ターンに2動くウサギと1動くカメを走らせ続ければ、必ずいつか追いつくはず、という仕組み。
+
+    ```
+    class Solution:
+        def hasCycle(self, head: Optional[ListNode]) -> bool:
+            fast = head
+            while fast and fast.next:
+                head = head.next
+                fast = fast.next.next
+                if head is fast:
+                    return True
+            return False
+
+    ```
+### ` while fast and fast.next:` に関して、Noneかどうかの判定方法が自分の実装と違い、知識が怪しいことがわかったので調べた
+- 参考記事　：https://note.nkmk.me/python-none-usage/
+- pep8に次のような記述がある
+    - >None のようなシングルトンと比較をする場合は、常に is か is not を使うべきです。絶対に等値演算子を使わないでください。また、 本当は if x is not None と書いているつもりで、 if x と書いている場合は注意してください - たとえば、デフォルトの値がNoneになる変数や引数に、何かしら別の値が設定されているかどうかをテストする場合です。この「別の値」は、ブール型のコンテクストでは False と評価される(コンテナのような)型かもしれませんよ！
+        - https://pep8-ja.readthedocs.io/ja/latest/#section-36
+
+- シングルトン
+    -  > Singleton パターン（シングルトン・パターン）とは、オブジェクト指向のコンピュータプログラムにおける、デザインパターンの1つである。GoF (Gang of Four; 4人のギャングたち) によって定義された。Singleton パターンとは、そのクラスのインスタンスが1つしか生成されないことを保証するデザインパターンのことである。ロケールやルック・アンド・フィールなど、絶対にアプリケーション全体で統一しなければならない仕組みの実装に使用される[1]。
+        -  https://ja.wikipedia.org/wiki/Singleton_%E3%83%91%E3%82%BF%E3%83%BC%E3%83%B3
+
+- 等値演算子
+    - > 演算子 <, >, ==, >=, <=, および != は2つのオブジェクトの値を比較します。 オブジェクトが同じ型を持つ必要はりません。オブジェクト、値、および型 の章では、オブジェクトは (型や id に加えて) 値を持つことを述べています。
+        - https://docs.python.org/ja/3/reference/expressions.html#in
+
+- 自分の一回目のコードは等値演算子を使ってしまっていた。正解コードの```while fast``` も ``` while fast is not None``` にした方が良さそう。
+
+- ビデオの解説によると、isはメモリ上のアドレスで比較するとのこと。調べたところ正確には、CPythonだとそうで、他の場合はそう考えることもできる、という話の様子。
+    - >すべてのオブジェクトは、同一性 (identity)、型、値をもっています。 同一性 は生成されたあとは変更されません。これはオブジェクトのアドレスのようなものだと考えられるかもしれません。 is 演算子は2つのオブジェクトの同一性を比較します。 id() 関数は同一性を表す整数を返します。CPython 実装の詳細: CPython では、id(x) は x が格納されているメモリ上のアドレスを返します。
+        - https://docs.python.org/ja/3/reference/datamodel.html
+    - 同一性って書いてあるとわかりにくいけど、要はidのことで、アイデンティティのこと。
+
+- 生成された後変更されなかったらいつかメモリ中の住所が全部埋まっちゃいそうだなと思ったら下の方にちゃんと破壊されるって書いてあった
+    - > オブジェクトを明示的に破壊することはできません; しかし、オブジェクトに到達不能 (unreachable) になると、ガベージコレクション (garbage-collection) によって処理されるかもしれません。ガベージコレクションを遅らせたり、全く行わない実装も許されています --- 到達可能なオブジェクトを処理してしまわないかぎり、ガベージコレクションをどう実装するかは実装品質の問題です。 
+
+
+- CPython とは 
+    - CPythonは、Pythonプログラミング言語の標準的な実装であり、最も広く使用されているPythonインタープリタです[1][2][3]。以下にCPythonの主な特徴をまとめます:
+
+        1. リファレンス実装: CPythonはPythonの公式実装であり、他のPython実装の基準となっています[1][2]。
+
+        2. C言語で記述: CPythonはC言語で書かれており、これが名前の由来となっています[1][2]。
+
+        3. バイトコードインタプリタ: Pythonコードをバイトコードにコンパイルしてから実行します[3]。
+
+        4. 広範な互換性: 多くのPythonライブラリやツールがCPythonに最適化されているため、高い互換性を持っています[3]。
+
+        5. GIL (Global Interpreter Lock): マルチスレッドの利用に制限がありますが、これはCPythonの特徴の一つです[3]。
+
+        6. C言語との連携: C言語で書かれたライブラリとの連携が容易です[2]。
+
+        CPythonとPythonの関係については、以下のように理解できます:
+
+        - 「Python」と一般的に言及される場合、多くの場合CPythonを指します[4]。
+        - Pythonはプログラミング言語自体を指し、CPythonはその実装の一つです[3]。
+
+        CPython以外にも、Jython（Java実装）やIronPython（.NET実装）など、他のPython実装が存在しますが、CPythonが最も広く使用されています[1][2]。
+
+        初心者にとっては、「Python」と「CPython」はほぼ同義と考えて問題ありません[4]。Pythonの公式サイトからダウンロードしてインストールする場合、通常はCPythonをインストールすることになります。
+
+        Citations:
+        [1] https://ja.wikipedia.org/wiki/CPython
+        [2] https://www.sejuku.net/blog/89458
+        [3] https://romptn.com/article/6995
+        [4] https://python-beginner.blog/zakkuricpython/
+        [5] https://gihyo.jp/article/2023/10/monthly-python-2310
+
+- Python インタープリタ　とは
+    -  pythonはインタープリタ言語(≒スクリプト言語)なので、ソースコードを書いたテキストを１行ずつ読み込んではコンピュータが実行出来る命令に変換しながら動いている
+    - つまり、テキストファイルでソースコードを書けば、それが動く(コンパイルとかビルドとかややこしいことは必要なく、エディタで書くだけで良い)
+    - ただし動かすにはインタープリタが必要。これがソースコードを翻訳して実行してくれる。Cなどは、プログラムが実行出来る命令のかたまりにソースコードを変換してしまい、EXEファイルを作って、EXEファイルは、そのままダブルクリックして動かすことができるらしい。
+        - 参考： https://www.tuyano.com/index3?id=506001
+
+- バイトコード　とは
+    -  aaa.py はインタープリタによって aaa.pycというバイトコードにコンパイルされ、その後それがPythonVM(Pythonプログラムを実行するための仮想マシン)で実行されるらしい。
+        - 参考　https://zenn.dev/fastriver/articles/python-pyc-binary 
+    - 時々見える場所に謎に発生していた.pyc は importの高速化のために作ってくれていたものらしい。
+        -  > CPython compiles its source code into “byte code”, and for performance reasons, it caches this byte code on the file system whenever the source file has changes. This makes loading of Python modules much faster because the compilation phase can be bypassed. When your source file is foo.py, CPython caches the byte code in a foo.pyc file right next to the source.
+            - https://peps.python.org/pep-3147/
+- コンパイルとビルド とは
+    - コンパイルとプログラムのビルドには以下のような違いがあります:
+
+        1. 範囲の違い:
+
+        - コンパイルは、ソースコードを機械語やオブジェクトコードに変換する作業のみを指します[1][2][3]。
+
+        - ビルドは、コンパイルを含むより広範な作業を指し、コンパイル後のリンク作業や実行ファイルの生成までを含みます[2][3][5]。
+
+        2. 作業内容の違い:
+
+        - コンパイルは、人間が書いたプログラミング言語をコンピューターが理解できる機械語に翻訳する作業です[3]。
+
+        - ビルドは、コンパイルに加えて、複数のオブジェクトファイルや外部ライブラリをリンクし、最終的な実行可能ファイルを作成する一連のプロセスを含みます[2][3][5]。
+
+        3. 出力の違い:
+
+        - コンパイルの出力は、通常オブジェクトコードや中間コードです[1][2]。
+
+        - ビルドの出力は、最終的な実行可能ファイルやアプリケーションパッケージです[2][3][5]。
+
+        4. タイミングの違い:
+
+        - コンパイルは、ソースコードの変換のみを行います[1][2]。
+
+        - ビルドは、コンパイル後の作業も含むため、通常はプロジェクト全体の構築や更新時に行われます[2][3][5]。
+
+        つまり、コンパイルはビルドプロセスの一部であり、ビルドはコンパイルを含むより包括的な作業と言えます[2][3][5]。
+
+        Citations:
+        [1] https://wa3.i-3-i.info/diff502programming.html
+        [2] https://qiita.com/tomokichi_ruby/items/e1d52d3f34877389f905
+        [3] https://rookie.levtech.jp/guide/detail/257/
+        [4] https://qiita.com/rico/items/9ab8aa110e757a13ef37
+        [5] https://gimo.jp/glossary/details/build.html
+
+
+
+### 型ヒントを今まで書いていなかったので学ぶ
+- https://mypy.readthedocs.io/en/stable/cheat_sheet_py3.html に目を通した。
+- >  Mypy understands positional-only and keyword-only arguments
+     Positional-only arguments can also be marked by using a name starting with
+     two underscores
+    ```
+    def quux(x: int, /, *, y: int) -> None:
+        pass
+
+    quux(3, y=5)  # Ok
+    quux(3, 5)  # error: Too many positional arguments for "quux"
+    quux(x=3, y=5)  # error: Unexpected keyword argument "x" for "quux"
+    ```
+- "/"の前は位置引数で、"*"の後は
+- >4.8.3.2. 位置専用引数
+    これをもう少し詳しく見てみると、特定の引数を 位置専用 と印を付けられます。 位置専用 の場合、引数の順序が重要であり、キーワードで引数を渡せません。 位置専用引数は / （スラッシュ）の前に配置されます。 / は、位置専用引数を残りの引数から論理的に分離するために使用されます。 関数定義に / がない場合、位置専用引数はありません。
+    / の後の引数は、 位置またはキーワード 、もしくは、 キーワード専用 です。
+
+    >4.8.3.3. キーワード専用引数
+    引数をキーワード引数で渡す必要があることを示す キーワード専用 として引数をマークするには、引数リストの最初の キーワード専用 引数の直前に * を配置します。
+
+    >4.8.3.4. 関数の例
+    / および * といったマーカーに注意を払って、次の関数定義の例を見てください:
+    ```
+    def standard_arg(arg):
+        print(arg)
+
+    def pos_only_arg(arg, /):
+        print(arg)
+
+    def kwd_only_arg(*, arg):
+        print(arg)
+
+    def combined_example(pos_only, /, standard, *, kwd_only):
+        print(pos_only, standard, kwd_only)
+    ```
+    - https://docs.python.org/ja/3/tutorial/controlflow.html
+
+-  > 7.11.1. future 文 (future statement)¶
+
+    >future 文 は、将来の特定の新たな機能が標準化された Python のリリースで利用可能になるような構文や意味付けを使って、特定のモジュールをコンパイルさせるための、コンパイラに対する指示句 (directive) です。future 文は互換性のない変更がされた将来の Python のバージョンに容易に移行するためのものです。future 文によって新機能が標準となるリリースの前にそれをモジュール単位で使用することが出来ます。
+    - https://docs.python.org/ja/3/reference/simple_stmts.html#future 
+    - ```from __future__ import annotations```
+    - > You may want to reference a class before it is defined.This is known as a "forward reference".
+
+- STEP2完成版
+    ```
+    class Solution:
+        def hasCycle(self, head: Optional[ListNode]) -> bool:
+            checking_node = head
+            seen = set()
+
+            while checking_node is not None:
+                if checking_node in seen:
+                    return True
+                else:
+                    seen.add(checking_node)
+                    checking_node = checking_node.next
+            
+            return False
+    ```
+
+### 2-2. 他の人の回答を見る
+#### １つ目のPR(https://github.com/canisterism/leetcode/pull/2)とそこにリンクのあった2つ目(https://github.com/tk-hirom/Arai60/pull/1)
+- slowやfastという変数名を使っていて、headをslowとして動かすよりわかりやすそう。
+- setを使うのが良いらしい (Listのinの確認は線形で舐めるので大きくなると遅い)
+    - setはhashtableだから ```in```で探す処理がO(1) https://wiki.python.org/moin/TimeComplexity
+    - ハッシュテーブルの解説 https://qiita.com/tenten1010/items/da4084f937ad07e70164
+- 時間計算量と空間計算量を考えていなかった。
+    - Nodeの数をNとする
+    - STEP1
+        - 時間計算量O(N^2)
+            - whileのループ処理がN回で、1回の処理あたり、listのinだから1~N回つまり、N+2N+3N+...+N^2
+            - ちなみにsetを使っていれば1回あたりが1に減ったので、O(N)で済んだ。
+        - 空間計算量O(N)
+            - checked_nodesの長さ分。
+    - leetcodeの正解(ウサギとかめ)
+        - 時間計算量O(N)
+            - 輪っかがない時はN/2でfastがゴールにつく
+            - 輪っかがある時で、一番fastが追いつくのが大変なのは全てのNode使って輪っかになっていた時で、その場合はN
+        - 空間計算量O(1)
+            - ループ処理はあるが、毎回上書きするので、Nに関係ない
+
+- flagにTrue Falseを入れなくても、直接True False返せば良さそう。
+
+#### 3つ目のPR(https://github.com/cheeseNA/leetcode/pull/6/files#diff-f0c9346ccaccbcb278b9a11d82e7dad004f4e6fa46308cc88f779c21725e014b)
+- ```slow = fast = head``` という書き方があることを知った。
+
+
+# STEP 3　　3回連続でエラーなしで
+```
+class Solution:
+    def hasCycle(self, head: Optional[ListNode]) -> bool:
+        seen = set()
+        checking_node = head
+
+        while checking_node is not None:
+            if checking_node in seen:
+                return True
+            else:
+                seen.add(checking_node)
+                checking_node = checking_node.next
+        
+        return False
+
+```
+
