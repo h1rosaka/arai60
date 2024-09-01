@@ -18,5 +18,6 @@
     - 空間
 
 # STEP3　　3回連続でエラーなしで解けるまで解く
-
+<details><summary>コード</summary>
+</details>
 # STEP4 レビューFB反映
