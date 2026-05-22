@@ -6,22 +6,22 @@ https://neetcode.io/problems/meeting-schedule/question
 
 
 # STEP 1 自力で解く。
-```py
-class Solution:
-    def canAttendMeetings(self, intervals: List[Interval]) -> bool:
-        tuple_interevals = []
-        for intereval in intervals:
-            tuple_interevals.append((intereval.start, intereval.end))
-
-        sorted_intervals = sorted(tuple_interevals)
-        latest_end = 0
-        for intereval in sorted_intervals:
-            start, end = intereval
-            if start < latest_end:
-                return False
-            latest_end = end
-        return True
-```
+- _
+    ```py
+    class Solution:
+        def canAttendMeetings(self, intervals: List[Interval]) -> bool:
+            tuple_interevals = []
+            for intereval in intervals:
+                tuple_interevals.append((intereval.start, intereval.end))
+            sorted_intervals = sorted(tuple_interevals)
+            latest_end = 0
+            for intereval in sorted_intervals:
+                start, end = intereval
+                if start < latest_end:
+                    return False
+                latest_end = end
+            return True
+    ```
 - begin/end の方がしっくりくるが、Intervalの定義に合わせて、start, end
 - start, endといった別の変数に一回入れずとも、`if interval.start < latest_end:`などとそのままでも良かった
 
